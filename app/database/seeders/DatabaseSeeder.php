@@ -2,24 +2,26 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\NganHangDeThi\NguoiDung;
+use App\Models\NganHangDeThi\VaiTro;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
+        $this->call(VaiTroSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // Tài khoản quản trị mẫu để đăng nhập lần đầu. ĐỔI MẬT KHẨU khi triển khai thật.
+        NguoiDung::updateOrCreate(
+            ['email' => 'admin@example.com'],
+            [
+                'hoTen' => 'Quản trị viên',
+                'matKhauMaHoa' => 'Admin@123456',
+                'maVaiTro' => VaiTro::where('tenVaiTro', 'Quản trị viên')->value('maVaiTro'),
+                'trangThai' => 'Hoạt động',
+                'ngayTao' => now(),
+            ]
+        );
     }
 }
