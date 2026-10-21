@@ -11,24 +11,19 @@ class VaiTro extends Model
 
     protected $primaryKey = 'maVaiTro';
 
-    public $timestamps = false;
-
-    public $incrementing = false;
-
     protected $keyType = 'int';
 
+    public $incrementing = true;
+
+    public $timestamps = false;
+
     protected $fillable = [
-        'maVaiTro',
         'tenVaiTro',
         'moTa',
     ];
 
     public function nguoiDungs(): HasMany
     {
-        return $this->hasMany(
-            NguoiDung::class,
-            'maVaiTro',
-            'maVaiTro'
-        );
+        return $this->hasMany(NguoiDung::class, 'maVaiTro', 'maVaiTro');
     }
 }

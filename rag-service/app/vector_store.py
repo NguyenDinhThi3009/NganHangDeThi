@@ -13,7 +13,7 @@ def get_qdrant_client() -> QdrantClient:
 
 
 def ensure_collections(vector_size: int = 1024) -> None:
-    \"\"\"Create starter collections if missing. BGE-M3 dense vectors commonly use 1024 dimensions.\"\"\"
+    """Create starter collections if missing. BGE-M3 dense vectors commonly use 1024 dimensions."""
     from qdrant_client.models import Distance, VectorParams
 
     client = get_qdrant_client()
