@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call(VaiTroSeeder::class);
+        $this->call(DanhMucMauSeeder::class);
 
         // Tài khoản quản trị mẫu để đăng nhập lần đầu. ĐỔI MẬT KHẨU khi triển khai thật.
         NguoiDung::updateOrCreate(

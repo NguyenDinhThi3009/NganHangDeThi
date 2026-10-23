@@ -11,6 +11,10 @@ class Settings(BaseSettings):
     llm_base_url: str | None = None
     llm_api_key: str | None = None
     llm_model: str | None = None
+    llm_timeout: int = 120
+    llm_max_tokens: int = 8192  # gồm cả token "suy nghĩ" của mô hình, đặt thấp dễ bị cắt cụt phản hồi
+    chunk_size: int = 1000      # số ký tự tối đa mỗi đoạn
+    chunk_overlap: int = 150    # số ký tự chồng lấp giữa hai đoạn liên tiếp
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
