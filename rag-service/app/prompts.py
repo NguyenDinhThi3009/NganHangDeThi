@@ -25,9 +25,13 @@ def build_user_prompt(req, context_chunks: list[dict]) -> str:
     else:
         dinh_dang = (
             '{"cau_hoi": [{"noi_dung": "...", "giai_thich": "...", "nguon": [1],\n'
-            '  "y_dap_an": [{"noi_dung": "...", "diem": 2.0}, {"noi_dung": "...", "diem": 3.0}]}]}'
+            '  "y_dap_an": [{"noi_dung": "...", "diem": 0.5}, {"noi_dung": "...", "diem": 0.5}, '
+            '{"noi_dung": "...", "diem": 0.5}, {"noi_dung": "...", "diem": 0.5}]}]}'
         )
-        yeu_cau_loai = "Mỗi câu có đáp án chia thành các ý, mỗi ý kèm điểm; tổng điểm các ý của một câu bằng 10."
+        yeu_cau_loai = (
+            "Đáp án của mỗi câu chia thành nhiều ý nhỏ. MỖI Ý TỐI ĐA 0,5 ĐIỂM (quy định của trường); "
+            f"tổng điểm các ý của một câu bằng đúng {req.diem_cau:g} điểm (ví dụ cần ít nhất {int(-(-req.diem_cau // 0.5))} ý)."
+        )
 
     return (
         f"Học phần: {req.hoc_phan}\n"
@@ -45,6 +49,9 @@ def build_user_prompt(req, context_chunks: list[dict]) -> str:
         "- Chỉ ghi số thứ tự đoạn vào trường \"nguon\"; tuyệt đối không nhắc \"đoạn 1\", \"theo ngữ cảnh\"... trong noi_dung hay giai_thich.\n"
         "- Đáp án chỉ gồm những ý mà câu hỏi thực sự yêu cầu, không thêm ý ngoài yêu cầu của đề.\n"
         "- Trường giai_thich chỉ 1-2 câu ngắn gọn.\n"
+        "- Mọi khẳng định trong đáp án đúng phải được NGỮ CẢNH nêu rõ; nếu ngữ cảnh chỉ nói \"thường\", \"có thể\" thì không biến thành khẳng định tuyệt đối (\"bắt buộc\", \"luôn\").\n"
+        "- Mỗi phương án sai phải mâu thuẫn trực tiếp với một thông tin trong NGỮ CẢNH, không được là điều có thể đúng trong thực tế.\n"
+        "- Câu hỏi và đáp án phải đúng mức Bloom đã chọn: với Phân tích/Đánh giá, yêu cầu so sánh, giải thích nguyên nhân - hệ quả hoặc đưa ra kết luận từ tình huống, không chỉ liệt kê lại thông tin.\n"
         "- Không dùng dấu ngoặc kép (\") bên trong nội dung văn bản, nếu cần trích dẫn hãy dùng dấu nháy đơn (') để JSON luôn hợp lệ.\n\n"
         f"ĐỊNH DẠNG JSON (chỉ trả về JSON này):\n{dinh_dang}"
     )

@@ -9,6 +9,7 @@ from qdrant_client.models import (
     MatchAny,
     MatchValue,
     PayloadSchemaType,
+    PointIdsList,
     PointStruct,
     VectorParams,
 )
@@ -36,11 +37,16 @@ def ensure_collections(vector_size: int = 1024) -> None:
                 collection_name=name,
                 vectors_config=VectorParams(size=vector_size, distance=Distance.COSINE),
             )
-    # Chỉ mục để lọc nhanh theo tài liệu
-    try:
-        client.create_payload_index(CHUNK_COLLECTION, "document_id", PayloadSchemaType.INTEGER)
-    except Exception:
-        pass  # đã tồn tại
+    # Chỉ mục để lọc nhanh theo tài liệu / học phần
+    for collection, field, schema in (
+        (CHUNK_COLLECTION, "document_id", PayloadSchemaType.INTEGER),
+        (QUESTION_COLLECTION, "ma_cau_hoi", PayloadSchemaType.INTEGER),
+        (QUESTION_COLLECTION, "ma_hoc_phan", PayloadSchemaType.KEYWORD),
+    ):
+        try:
+            client.create_payload_index(collection, field, schema)
+        except Exception:
+            pass  # đã tồn tại
 
 
 def point_id(document_id: int, chunk_index: int) -> str:
@@ -97,3 +103,45 @@ def search_chunks(vector: list[float], limit: int, document_ids: list[int] | Non
         with_payload=True,
     )
     return [{"score": p.score, **(p.payload or {})} for p in response.points]
+
+
+# ---------- Vector câu hỏi (collection cau_hoi) phục vụ phát hiện trùng lặp ----------
+def question_point_id(ma_cau_hoi: int) -> str:
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"cau-hoi:{ma_cau_hoi}"))
+
+
+def upsert_question(ma_cau_hoi: int, ma_hoc_phan: str, vector: list[float], model_name: str) -> str:
+    pid = question_point_id(ma_cau_hoi)
+    get_qdrant_client().upsert(
+        collection_name=QUESTION_COLLECTION,
+        points=[
+            PointStruct(
+                id=pid,
+                vector=vector,
+                payload={"ma_cau_hoi": ma_cau_hoi, "ma_hoc_phan": ma_hoc_phan, "model": model_name},
+            )
+        ],
+    )
+    return pid
+
+
+def search_questions(vector: list[float], limit: int, ma_hoc_phan: str, exclude_id: int) -> list[dict]:
+    """Tìm các câu hỏi gần nghĩa nhất trong cùng học phần, bỏ qua chính câu đang kiểm tra."""
+    response = get_qdrant_client().query_points(
+        collection_name=QUESTION_COLLECTION,
+        query=vector,
+        limit=limit,
+        query_filter=Filter(
+            must=[FieldCondition(key="ma_hoc_phan", match=MatchValue(value=ma_hoc_phan))],
+            must_not=[FieldCondition(key="ma_cau_hoi", match=MatchValue(value=exclude_id))],
+        ),
+        with_payload=True,
+    )
+    return [{"ma_cau_hoi": p.payload["ma_cau_hoi"], "score": p.score} for p in response.points]
+
+
+def delete_questions(ma_cau_hois: list[int]) -> None:
+    get_qdrant_client().delete(
+        collection_name=QUESTION_COLLECTION,
+        points_selector=PointIdsList(points=[question_point_id(m) for m in ma_cau_hois]),
+    )
