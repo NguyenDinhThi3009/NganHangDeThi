@@ -128,8 +128,8 @@ def generate_questions(req: GenerateRequest) -> GenerateResponse:
         if not noi_dung:
             warnings.append(f"Câu {i} bị bỏ vì thiếu nội dung.")
             continue
-        nguon = [
-            hits[n - 1]["chunk_index"]
+        nguon_hits = [
+            hits[n - 1]
             for n in item.get("nguon", [])
             if isinstance(n, int) and 1 <= n <= len(hits)
         ]
@@ -137,7 +137,8 @@ def generate_questions(req: GenerateRequest) -> GenerateResponse:
             noi_dung=noi_dung,
             loai_cau_hoi=req.loai_cau_hoi,
             giai_thich=(item.get("giai_thich") or None),
-            nguon_chunk=nguon,
+            nguon_chunk=[h["chunk_index"] for h in nguon_hits],
+            nguon_vector_ids=[vector_store.point_id(h["document_id"], h["chunk_index"]) for h in nguon_hits],
         )
         if is_mc:
             options = [
@@ -164,9 +165,13 @@ def generate_questions(req: GenerateRequest) -> GenerateResponse:
             if not parts:
                 warnings.append(f"Câu {i} bị bỏ vì thiếu đáp án.")
                 continue
-            tong = sum(p.diem for p in parts)
-            if abs(tong - 10) > 0.01:
-                warnings.append(f"Câu {i}: tổng điểm các ý là {tong:g} (yêu cầu 10), cần giảng viên chỉnh lại.")
+            tong = round(sum(p.diem for p in parts), 2)
+            if any(p.diem <= 0 or p.diem > 0.5 + 1e-9 for p in parts):
+                warnings.append(f"Câu {i} bị bỏ vì có ý vượt 0,5 điểm hoặc điểm không dương (BR-02).")
+                continue
+            if abs(tong - req.diem_cau) > 0.01:
+                warnings.append(f"Câu {i} bị bỏ vì tổng điểm các ý là {tong:g}, yêu cầu {req.diem_cau:g} (BR-02).")
+                continue
             q.y_dap_an_tu_luan = parts
         questions.append(q)
 

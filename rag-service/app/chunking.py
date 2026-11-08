@@ -1,5 +1,14 @@
-"""Chia văn bản thành các đoạn (chunk) có chồng lấp nhẹ, ưu tiên cắt ở cuối câu."""
+"""Chia văn bản thành các đoạn (chunk) có chồng lấp nhẹ, ưu tiên cắt ở cuối câu, không cắt giữa từ."""
 import re
+
+
+def _align_start(text: str, start: int, limit: int = 40) -> int:
+    """Nếu điểm bắt đầu rơi giữa một từ thì dời tới đầu từ kế tiếp."""
+    if start > 0 and not text[start - 1].isspace():
+        nxt = text.find(" ", start, start + limit)
+        if nxt != -1:
+            return nxt + 1
+    return start
 
 
 def chunk_pages(
@@ -16,11 +25,15 @@ def chunk_pages(
             if end < len(text):
                 cut = max(text.rfind(". ", start, end), text.rfind("; ", start, end), text.rfind(": ", start, end))
                 if cut > start + size // 2:
-                    end = cut + 1
+                    end = cut + 1  # cắt ngay sau dấu câu
+                else:
+                    space = text.rfind(" ", start + size // 2, end)
+                    if space != -1:
+                        end = space  # không có dấu câu: cắt tại khoảng trắng, tránh cắt giữa từ
             piece = text[start:end].strip()
             if len(piece) >= min_len:
                 chunks.append((page, piece))
             if end >= len(text):
                 break
-            start = max(end - overlap, start + 1)
+            start = _align_start(text, max(end - overlap, start + 1))
     return chunks

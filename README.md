@@ -79,10 +79,7 @@ MySQL mặc định được ánh xạ cổng `3307` trên máy host để trán
 ```bash
 cd rag-service
 python -m venv .venv
-# Windows:
 .venv\Scripts\activate
-# macOS/Linux:
-source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
@@ -96,54 +93,19 @@ Health check: http://127.0.0.1:8000/health
 - Mã hiện tại chỉ cung cấp health endpoint và khung API; chưa triển khai đầy đủ parsing PDF/DOCX/PPTX, chunking, indexing, retrieval, sinh đề và xuất DOCX/PDF.
 
 
-# Khởi động 
-
-Làm lần lượt 4 bước. Bước 3 và 4 mỗi bước một terminal riêng (VS Code: bấm dấu `+` ở thanh Terminal).
-
-## Bước 1. Qdrant (Docker)
-
-1. Mở **Docker Desktop**, đợi tới khi nó khởi động xong.
-2. Chạy:
+Mở http://127.0.0.1:8080 (tài khoản mẫu: `admin@example.com` / `Admin@123456`).
 
 ```bash
 cd D:\NganHangDeThi
 docker compose up -d qdrant
-```
 
-Kiểm tra: `docker ps` thấy `nganhangdethi-qdrant`.
-
-## Bước 2. MySQL
-
-Thường tự chạy. Nếu không: `Windows + R` → gõ `services.msc` → tìm **MySQL80** → chuột phải → **Start**.
-
-## Bước 3. RAG service (có venv)
-
-```bash
-cd D:\NganHangDeThi\rag-service
+cd rag-service
 .venv\Scripts\activate
 uvicorn app.main:app --reload
-```
 
-- Đầu dòng phải có **`(.venv)`**.
-- Thấy `Uvicorn running on http://127.0.0.1:8000` là xong. Thử AI tại http://127.0.0.1:8000/docs
-- Không gõ lệnh khác vào terminal này, không đóng nó.
-
-## Bước 4. Web Laravel (terminal mới, không cần venv)
-
-```bash
 cd D:\NganHangDeThi\app
+php artisan route:clear
 php artisan serve --port=8080
-```
 
-Mở http://127.0.0.1:8080 (tài khoản mẫu: `admin@example.com` / `Admin@123456`).
-
----
-
-## Làm một lần sau khi cập nhật code (chỉ lần này)
-
-Trong terminal Bước 3, **trước khi chạy `uvicorn`**:
-
-```bash
-cd D:\NganHangDeThi\rag-service
-.venv\Scripts\activate
-pip install -r requirements.txt
+cd D:\NganHangDeThi\app
+php artisan queue:work --timeout=600
