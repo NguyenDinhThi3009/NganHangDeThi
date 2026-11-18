@@ -61,7 +61,7 @@ def _to_search_results(hits: list[dict]) -> list[SearchResult]:
     ]
 
 
-def _ask_llm(messages: list[dict]) -> tuple[dict, int, int, list[str]]:
+def _ask_llm(messages: list[dict], deadline: float | None = None) -> tuple[dict, int, int, list[str]]:
     """Gọi LLM, nếu JSON hỏng thì hỏi lại 1 lần kèm yêu cầu sửa. Trả về (dữ liệu, token vào, token ra, cảnh báo)."""
     tokens_in = tokens_out = 0
     warnings: list[str] = []
@@ -69,7 +69,7 @@ def _ask_llm(messages: list[dict]) -> tuple[dict, int, int, list[str]]:
     tail = ""
 
     for attempt in range(1, MAX_ATTEMPTS + 1):
-        content, usage = llm.chat(messages)
+        content, usage = llm.chat(messages, deadline=deadline)
         tokens_in += usage.get("prompt_tokens") or 0
         tokens_out += usage.get("completion_tokens") or 0
         truncated = usage.get("finish_reason") == "length"
@@ -99,6 +99,7 @@ def _ask_llm(messages: list[dict]) -> tuple[dict, int, int, list[str]]:
 
 def generate_questions(req: GenerateRequest) -> GenerateResponse:
     started = time.time()
+    deadline = time.monotonic() + settings.llm_total_timeout  # ngân sách thời gian chung cho mọi lần hỏi LLM
 
     query_vector = embedding.embed_texts([f"{req.hoc_phan}. {req.clo_mo_ta}"])[0]
     hits = vector_store.search_chunks(query_vector, req.top_k, req.document_ids)
@@ -109,7 +110,8 @@ def generate_questions(req: GenerateRequest) -> GenerateResponse:
         [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": build_user_prompt(req, hits)},
-        ]
+        ],
+        deadline,
     )
 
     is_mc = req.loai_cau_hoi.lower().startswith("trắc")

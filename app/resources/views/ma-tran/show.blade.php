@@ -45,6 +45,12 @@
             @endif
         @endif
 
+        @if ($maTran->trangThai === 'Đã chốt')
+            <div class="hang-nut">
+                <a class="nut nut-xanh" href="{{ route('de-thi.create', ['ma_tran' => $maTran->maMaTranDeThi]) }}">Tạo đề thi từ ma trận này</a>
+            </div>
+        @endif
+
         <h3>Chi tiết và số câu hỏi hiện có trong ngân hàng</h3>
         <table>
             <thead>

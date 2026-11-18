@@ -45,6 +45,20 @@
             @if (in_array(auth()->user()->vaiTro->tenVaiTro, ['Giảng viên', 'Quản trị viên'], true))
                 <a href="{{ route('cau-hoi.index') }}">Câu hỏi</a>
                 <a href="{{ route('ma-tran.index') }}">Ma trận đề</a>
+                <a href="{{ route('de-thi.index') }}">Đề thi</a>
+            @endif
+            @if (in_array(auth()->user()->vaiTro->tenVaiTro, ['Giảng viên', 'Trưởng bộ môn'], true))
+                <a href="{{ route('phan-bien.index') }}">Phản biện đề</a>
+            @endif
+            @if (in_array(auth()->user()->vaiTro->tenVaiTro, ['Trưởng bộ môn', 'Quản trị viên'], true))
+                <a href="{{ route('phan-cong.index') }}">Phân công học phần</a>
+            @endif
+            @if (in_array(auth()->user()->vaiTro->tenVaiTro, ['Phòng ĐT&ĐBCLGD', 'Quản trị viên'], true))
+                <a href="{{ route('ngan-hang.index') }}">Ngân hàng đề thi</a>
+                <a href="{{ route('chon-de.index') }}">Chọn đề thi</a>
+            @endif
+            @if (auth()->user()->vaiTro->tenVaiTro === 'Trưởng bộ môn')
+                <a href="{{ route('phe-duyet.index') }}">Phê duyệt đề</a>
             @endif
             @if (auth()->user()->vaiTro->tenVaiTro === 'Quản trị viên')
                 <a href="{{ route('chuong-trinh.index') }}">Chương trình đào tạo</a>

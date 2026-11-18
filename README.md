@@ -109,3 +109,10 @@ php artisan serve --port=8080
 
 cd D:\NganHangDeThi\app
 php artisan queue:work --timeout=600
+
+
+truongbm@example.com (Trưởng bộ môn)
+bienson@example.com (Giảng viên)
+phanbien@example.com (Giảng viên)
+phongdt@example.com(Phòng ĐT&ĐBCLGD)
+pass: Mau@123456
